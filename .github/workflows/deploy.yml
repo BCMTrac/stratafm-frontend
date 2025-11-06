@@ -1,0 +1,46 @@
+name: Deploy Flutter Web to Linux Server
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  deploy:
+    runs-on: self-hosted
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.24.5'
+          channel: 'stable'
+      
+      - name: Get dependencies
+        run: flutter pub get
+      
+      - name: Build web
+        run: flutter build web --release
+      
+      - name: Deploy to production
+        run: |
+          # Remove old files
+          rm -rf /var/www/stratafm-frontend/*
+          
+          # Copy new build
+          cp -r build/web/* /var/www/stratafm-frontend/
+          
+          # Set permissions
+          chmod -R 755 /var/www/stratafm-frontend
+      
+      - name: Restart web server
+        run: pm2 restart stratafm-web
+      
+      - name: Check deployment
+        run: |
+          sleep 3
+          pm2 list
+          curl -f http://localhost:3035 || exit 1
