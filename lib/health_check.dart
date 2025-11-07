@@ -290,7 +290,7 @@ class _HealthCheckScreenState extends State<HealthCheckScreen> {
                           _buildInfoCard(
                             'Database',
                             _dbHealthData!['server']['DatabaseName'] ?? 'N/A',
-                            icon: Icons.database,
+                            icon: Icons.storage,
                           ),
                           const SizedBox(height: 8),
                         ],

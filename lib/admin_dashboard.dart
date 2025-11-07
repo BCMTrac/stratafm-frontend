@@ -223,7 +223,7 @@ class _AdminDashboardState extends State<AdminDashboard>
                       Navigator.push(
                         context,
                         MaterialPageRoute(
-                          builder: (context) => ShowcasePage(user: widget.user),
+                          builder: (context) => ShowcasePage(user: widget.user ?? {}),
                         ),
                       );
                     },
