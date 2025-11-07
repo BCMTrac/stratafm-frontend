@@ -3,6 +3,7 @@ import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'showcase.dart';
 import 'dashboard.dart';
+import 'admin_dashboard.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -47,8 +48,17 @@ class _LoginScreenState extends State<LoginScreen> {
         final user = data['user'];
         
         if (mounted) {
-          // Jeremy goes to showcase, others to dashboard
-          if (user['name'] == 'Jeremy') {
+          // Route based on user role/name
+          if (user['role'] == 'Admin' || user['name'] == 'Gary') {
+            // Admin users go to admin dashboard
+            Navigator.pushReplacement(
+              context,
+              MaterialPageRoute(
+                builder: (context) => AdminDashboard(user: user),
+              ),
+            );
+          } else if (user['name'] == 'Jeremy') {
+            // Jeremy goes to showcase
             Navigator.pushReplacement(
               context,
               MaterialPageRoute(
@@ -56,6 +66,7 @@ class _LoginScreenState extends State<LoginScreen> {
               ),
             );
           } else {
+            // Regular users go to standard dashboard
             Navigator.pushReplacement(
               context,
               MaterialPageRoute(
@@ -271,6 +282,10 @@ class _LoginScreenState extends State<LoginScreen> {
                       Text(
                         'FM: fm@test.com / password123',
                         style: TextStyle(color: Colors.white60, fontSize: 12),
+                      ),
+                      Text(
+                        'Admin: gary@bcmtrac.co.za / GodF1rst777',
+                        style: TextStyle(color: Color(0xFFEF4444), fontSize: 12, fontWeight: FontWeight.bold),
                       ),
                       Text(
                         'Demo: jeremy@bcmtrac.co.za / Flutter777',

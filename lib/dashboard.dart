@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'dart:math' as math;
+import 'health_check.dart';
 
 class AnimatedDashboard extends StatefulWidget {
   final Map<String, dynamic>? user;
@@ -56,6 +57,19 @@ class _AnimatedDashboardState extends State<AnimatedDashboard>
     
     return Scaffold(
       backgroundColor: const Color(0xFF0F172A),
+      floatingActionButton: FloatingActionButton.extended(
+        onPressed: () {
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => const HealthCheckScreen(),
+            ),
+          );
+        },
+        backgroundColor: const Color(0xFF10B981),
+        icon: const Icon(Icons.monitor_heart),
+        label: const Text('Health'),
+      ),
       body: AnimatedBuilder(
         animation: _controller,
         builder: (context, child) {
