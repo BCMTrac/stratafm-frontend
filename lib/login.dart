@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
+import 'showcase.dart';
 import 'dashboard.dart';
 
 class LoginScreen extends StatefulWidget {
@@ -31,7 +32,7 @@ class _LoginScreenState extends State<LoginScreen> {
 
     try {
       final response = await http.post(
-        Uri.parse('http://127.0.0.1:3030/api/auth/login'),
+        Uri.parse('http://192.168.125.22:3030/api/auth/login'),
         headers: {'Content-Type': 'application/json'},
         body: json.encode({
           'email': _emailController.text,
@@ -42,14 +43,26 @@ class _LoginScreenState extends State<LoginScreen> {
       final data = json.decode(response.body);
 
       if (data['success'] == true) {
-        // Login successful - navigate to dashboard
+        // Login successful - check user and route accordingly
+        final user = data['user'];
+        
         if (mounted) {
-          Navigator.pushReplacement(
-            context,
-            MaterialPageRoute(
-              builder: (context) => AnimatedDashboard(user: data['user']),
-            ),
-          );
+          // Jeremy goes to showcase, others to dashboard
+          if (user['name'] == 'Jeremy') {
+            Navigator.pushReplacement(
+              context,
+              MaterialPageRoute(
+                builder: (context) => ShowcasePage(user: user),
+              ),
+            );
+          } else {
+            Navigator.pushReplacement(
+              context,
+              MaterialPageRoute(
+                builder: (context) => AnimatedDashboard(user: user),
+              ),
+            );
+          }
         }
       } else {
         // Login failed
@@ -258,6 +271,10 @@ class _LoginScreenState extends State<LoginScreen> {
                       Text(
                         'FM: fm@test.com / password123',
                         style: TextStyle(color: Colors.white60, fontSize: 12),
+                      ),
+                      Text(
+                        'Demo: jeremy@bcmtrac.co.za / Flutter777',
+                        style: TextStyle(color: Color(0xFF8B5CF6), fontSize: 12, fontWeight: FontWeight.bold),
                       ),
                     ],
                   ),
