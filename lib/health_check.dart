@@ -32,17 +32,17 @@ class _HealthCheckScreenState extends State<HealthCheckScreen> {
     try {
       // Check general health
       final healthResponse = await http.get(
-        Uri.parse('http://192.168.125.22:3030/health'),
+        Uri.parse('/health'),
       );
 
       // Check database health
       final dbHealthResponse = await http.get(
-        Uri.parse('http://192.168.125.22:3030/health/db'),
+        Uri.parse('/health/db'),
       );
 
       // Get tables list
       final tablesResponse = await http.get(
-        Uri.parse('http://192.168.125.22:3030/health/db/tables'),
+        Uri.parse('/health/db/tables'),
       );
 
       setState(() {

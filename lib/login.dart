@@ -33,7 +33,7 @@ class _LoginScreenState extends State<LoginScreen> {
 
     try {
       final response = await http.post(
-        Uri.parse('http://192.168.125.22:3030/api/auth/login'),
+        Uri.parse('/api/auth/login'),  // Use relative URL
         headers: {'Content-Type': 'application/json'},
         body: json.encode({
           'email': _emailController.text,
