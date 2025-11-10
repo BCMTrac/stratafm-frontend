@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
+import 'config.dart';
 
 class HealthCheckScreen extends StatefulWidget {
   const HealthCheckScreen({super.key});
@@ -32,17 +33,17 @@ class _HealthCheckScreenState extends State<HealthCheckScreen> {
     try {
       // Check general health
       final healthResponse = await http.get(
-        Uri.parse('/health'),
+        Uri.parse(Config.getApiUrl('/health')),
       );
 
       // Check database health
       final dbHealthResponse = await http.get(
-        Uri.parse('/health/db'),
+        Uri.parse(Config.getApiUrl('/health/db')),
       );
 
       // Get tables list
       final tablesResponse = await http.get(
-        Uri.parse('/health/db/tables'),
+        Uri.parse(Config.getApiUrl('/health/db/tables')),
       );
 
       setState(() {

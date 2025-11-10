@@ -4,6 +4,7 @@ import 'dart:convert';
 import 'showcase.dart';
 import 'dashboard.dart';
 import 'admin_dashboard.dart';
+import 'config.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -33,7 +34,7 @@ class _LoginScreenState extends State<LoginScreen> {
 
     try {
       final response = await http.post(
-        Uri.parse('/api/auth/login'),  // Use relative URL
+        Uri.parse(Config.getApiUrl('/api/auth/login')),
         headers: {'Content-Type': 'application/json'},
         body: json.encode({
           'email': _emailController.text,
