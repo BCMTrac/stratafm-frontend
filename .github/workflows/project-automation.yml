@@ -11,13 +11,12 @@ jobs:
       - name: Add issue, set Start Date and Story Points
         uses: actions/github-script@v7
         with:
-          github-token: "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"
+          github-token: ${{ secrets.AUTOMATION_PAT }}
           script: |
             const org = "BCMTrac";
             const projectNumber = 8;
             const issue = context.payload.issue;
 
-            // ── 1. Get project ID + field IDs ──
             const projectData = await github.graphql(`
               query($org: String!, $number: Int!) {
                 organization(login: $org) {
@@ -41,7 +40,6 @@ jobs:
             const startDateField  = fields.find(f => f.name === "Start Date");
             const storyPointField = fields.find(f => f.name === "Story Points");
 
-            // ── 2. Add issue to project (idempotent) ──
             const addRes = await github.graphql(`
               mutation($p: ID!, $i: ID!) {
                 addProjectV2ItemById(input: { projectId: $p, contentId: $i }) {
@@ -51,10 +49,8 @@ jobs:
             `, { p: projectId, i: issue.node_id });
 
             const itemId = addRes.addProjectV2ItemById.item.id;
-
             const updates = [];
 
-            // ── 3. Set Start Date = issue created date ──
             if (startDateField) {
               updates.push(github.graphql(`
                 mutation($p: ID!, $i: ID!, $f: ID!, $v: ProjectV2FieldValue!) {
@@ -62,15 +58,9 @@ jobs:
                     projectV2Item { id }
                   }
                 }
-              `, {
-                p: projectId,
-                i: itemId,
-                f: startDateField.id,
-                v: { date: issue.created_at.split("T")[0] }
-              }));
+              `, { p: projectId, i: itemId, f: startDateField.id, v: { date: issue.created_at.split("T")[0] } }));
             }
 
-            // ── 4. Set Story Points from sp: label ──
             if (storyPointField) {
               const spLabel = issue.labels.find(l => /^sp:\d+$/i.test(l.name));
               if (spLabel) {
@@ -82,16 +72,10 @@ jobs:
                         projectV2Item { id }
                       }
                     }
-                  `, {
-                    p: projectId,
-                    i: itemId,
-                    f: storyPointField.id,
-                    v: { number: points }
-                  }));
+                  `, { p: projectId, i: itemId, f: storyPointField.id, v: { number: points } }));
                 }
               }
             }
 
             await Promise.all(updates);
-            console.log(`✓ Issue #${issue.number} added — Start Date set, Story Points synced.`);
-
+            console.log(`Issue added`);
