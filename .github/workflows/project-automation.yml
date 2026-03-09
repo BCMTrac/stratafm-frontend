@@ -11,7 +11,7 @@ jobs:
       - name: Add issue, set Start Date, Story Points, and Priority
         uses: actions/github-script@v7
         with:
-          github-token: "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"
+          github-token: ${{ secrets.AUTOMATION_PAT }}
           script: |
             const org = "BCMTrac";
             const projectNumber = 8;
@@ -115,4 +115,4 @@ jobs:
             }
 
             await Promise.all(updates);
-            console.log(`✓ Issue #${issue.number} added — Start Date, Story Points, and Priority synced.`);
+            console.log(`âœ“ Issue #${issue.number} added â€” Start Date, Story Points, and Priority synced.`);
