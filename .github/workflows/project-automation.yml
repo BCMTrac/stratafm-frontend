@@ -1,24 +1,118 @@
-name: BCMTrac Project Automation
+name: BCMTrac Add Issues to Board
+
 on:
   issues:
     types: [opened, reopened]
+
 jobs:
   add-to-board:
     runs-on: ubuntu-latest
     steps:
-      - name: Add issue to BCMTrac project board
+      - name: Add issue, set Start Date, Story Points, and Priority
         uses: actions/github-script@v7
         with:
-          github-token: "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"
+          github-token: "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"
           script: |
-            await github.graphql(`
+            const org = "BCMTrac";
+            const projectNumber = 8;
+            const issue = context.payload.issue;
+
+            const projectData = await github.graphql(`
+              query($org: String!, $number: Int!) {
+                organization(login: $org) {
+                  projectV2(number: $number) {
+                    id
+                    fields(first: 20) {
+                      nodes {
+                        ... on ProjectV2Field            { id name dataType }
+                        ... on ProjectV2SingleSelectField { id name options { id name } }
+                        ... on ProjectV2NumberField       { id name }
+                      }
+                    }
+                  }
+                }
+              }
+            `, { org, number: projectNumber });
+
+            const project   = projectData.organization.projectV2;
+            const projectId = project.id;
+            const fields    = project.fields.nodes;
+
+            const startDateField  = fields.find(f => f.name === "Start Date");
+            const storyPointField = fields.find(f => f.name === "Story Points");
+            const priorityField   = fields.find(f => f.name === "Priority");
+
+            const addRes = await github.graphql(`
               mutation($p: ID!, $i: ID!) {
                 addProjectV2ItemById(input: { projectId: $p, contentId: $i }) {
                   item { id }
                 }
               }
-            `, {
-              p: "PVT_kwDODc8SNM4BQ6v2",
-              i: context.payload.issue.node_id
-            });
+            `, { p: projectId, i: issue.node_id });
 
+            const itemId = addRes.addProjectV2ItemById.item.id;
+            const updates = [];
+
+            if (startDateField) {
+              updates.push(github.graphql(`
+                mutation($p: ID!, $i: ID!, $f: ID!, $v: ProjectV2FieldValue!) {
+                  updateProjectV2ItemFieldValue(input: { projectId: $p, itemId: $i, fieldId: $f, value: $v }) {
+                    projectV2Item { id }
+                  }
+                }
+              `, { p: projectId, i: itemId, f: startDateField.id, v: { date: issue.created_at.split("T")[0] } }));
+            }
+
+            if (storyPointField) {
+              let points = 0;
+
+              const spLabel = issue.labels.find(l => /^sp:\d+$/i.test(l.name));
+              if (spLabel) {
+                points = parseInt(spLabel.name.split(":")[1], 10);
+              }
+
+              if (!points && issue.body) {
+                const m = issue.body.match(/###\s*Story Points\s*[\r\n]+\s*(\d+)/);
+                if (m) {
+                  points = parseInt(m[1], 10);
+                  try {
+                    await github.rest.issues.addLabels({
+                      owner: context.repo.owner,
+                      repo: context.repo.repo,
+                      issue_number: issue.number,
+                      labels: [`sp:${points}`]
+                    });
+                  } catch(e) {}
+                }
+              }
+
+              if (points > 0) {
+                updates.push(github.graphql(`
+                  mutation($p: ID!, $i: ID!, $f: ID!, $v: ProjectV2FieldValue!) {
+                    updateProjectV2ItemFieldValue(input: { projectId: $p, itemId: $i, fieldId: $f, value: $v }) {
+                      projectV2Item { id }
+                    }
+                  }
+                `, { p: projectId, i: itemId, f: storyPointField.id, v: { number: points } }));
+              }
+            }
+
+            if (priorityField && priorityField.options && issue.body) {
+              const m = issue.body.match(/###\s*Priority\s*[\r\n]+\s*(.+)/);
+              if (m) {
+                const priorityText = m[1].trim();
+                const option = priorityField.options.find(o => o.name.toLowerCase() === priorityText.toLowerCase());
+                if (option) {
+                  updates.push(github.graphql(`
+                    mutation($p: ID!, $i: ID!, $f: ID!, $v: ProjectV2FieldValue!) {
+                      updateProjectV2ItemFieldValue(input: { projectId: $p, itemId: $i, fieldId: $f, value: $v }) {
+                        projectV2Item { id }
+                      }
+                    }
+                  `, { p: projectId, i: itemId, f: priorityField.id, v: { singleSelectOptionId: option.id } }));
+                }
+              }
+            }
+
+            await Promise.all(updates);
+            console.log(`✓ Issue #${issue.number} added — Start Date, Story Points, and Priority synced.`);
