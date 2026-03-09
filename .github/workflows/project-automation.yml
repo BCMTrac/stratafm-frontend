@@ -26,7 +26,6 @@ jobs:
                       nodes {
                         ... on ProjectV2Field            { id name dataType }
                         ... on ProjectV2SingleSelectField { id name options { id name } }
-                        ... on ProjectV2NumberField       { id name }
                       }
                     }
                   }
@@ -50,7 +49,8 @@ jobs:
               }
             `, { p: projectId, i: issue.node_id });
 
-            const itemId = addRes.addProjectV2ItemById.item.id;
+            const itemId = addRes.addProjectV2ItemById?.item?.id;
+            if (!itemId) { console.log(`Issue #${issue.number} — could not add to project.`); return; }
             const updates = [];
 
             if (startDateField) {
@@ -115,4 +115,4 @@ jobs:
             }
 
             await Promise.all(updates);
-            console.log(`âœ“ Issue #${issue.number} added â€” Start Date, Story Points, and Priority synced.`);
+            console.log(`Issue #${issue.number} added — Start Date, Story Points, and Priority synced.`);
