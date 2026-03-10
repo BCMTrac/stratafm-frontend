@@ -8,7 +8,7 @@ jobs:
   add-to-board:
     runs-on: ubuntu-latest
     steps:
-      - name: Add issue, set Start Date, Story Points, and Priority
+      - name: Add issue to project board
         uses: actions/github-script@v7
         with:
           github-token: ${{ secrets.AUTOMATION_PAT }}
@@ -16,61 +16,85 @@ jobs:
             const org = "BCMTrac";
             const projectNumber = 8;
             const issue = context.payload.issue;
+            const repo = context.repo.repo;
 
-            const projectData = await github.graphql(`
-              query($org: String!, $number: Int!) {
-                organization(login: $org) {
-                  projectV2(number: $number) {
-                    id
-                    fields(first: 20) {
-                      nodes {
-                        ... on ProjectV2Field            { id name dataType }
-                        ... on ProjectV2SingleSelectField { id name options { id name } }
+            console.log(`[${repo}] Issue #${issue.number} opened: "${issue.title}"`);
+
+            let projectId, fields;
+            try {
+              const projectData = await github.graphql(`
+                query($org: String!, $number: Int!) {
+                  organization(login: $org) {
+                    projectV2(number: $number) {
+                      id
+                      fields(first: 50) {
+                        nodes {
+                          ... on ProjectV2Field            { id name dataType }
+                          ... on ProjectV2SingleSelectField { id name options { id name } }
+                        }
                       }
                     }
                   }
                 }
-              }
-            `, { org, number: projectNumber });
+              `, { org, number: projectNumber });
+              projectId = projectData.organization.projectV2.id;
+              fields    = projectData.organization.projectV2.fields.nodes;
+            } catch (e) {
+              core.setFailed(`Failed to fetch project data: ${e.message}`);
+              return;
+            }
 
-            const project   = projectData.organization.projectV2;
-            const projectId = project.id;
-            const fields    = project.fields.nodes;
+            let itemId;
+            try {
+              const addRes = await github.graphql(`
+                mutation($p: ID!, $i: ID!) {
+                  addProjectV2ItemById(input: { projectId: $p, contentId: $i }) {
+                    item { id }
+                  }
+                }
+              `, { p: projectId, i: issue.node_id });
+              itemId = addRes.addProjectV2ItemById?.item?.id;
+            } catch (e) {
+              core.setFailed(`Failed to add issue #${issue.number} to project: ${e.message}`);
+              return;
+            }
+
+            if (!itemId) {
+              core.setFailed(`Issue #${issue.number} — addProjectV2ItemById returned no item ID`);
+              return;
+            }
+
+            console.log(`[${repo}] Issue #${issue.number} added to board (itemId: ${itemId})`);
 
             const startDateField  = fields.find(f => f.name === "Start Date");
             const storyPointField = fields.find(f => f.name === "Story Points");
             const priorityField   = fields.find(f => f.name === "Priority");
 
-            const addRes = await github.graphql(`
-              mutation($p: ID!, $i: ID!) {
-                addProjectV2ItemById(input: { projectId: $p, contentId: $i }) {
-                  item { id }
-                }
+            async function updateField(fieldId, value, label) {
+              try {
+                await github.graphql(`
+                  mutation($p: ID!, $i: ID!, $f: ID!, $v: ProjectV2FieldValue!) {
+                    updateProjectV2ItemFieldValue(input: { projectId: $p, itemId: $i, fieldId: $f, value: $v }) {
+                      projectV2Item { id }
+                    }
+                  }
+                `, { p: projectId, i: itemId, f: fieldId, v: value });
+                console.log(`[${repo}] Issue #${issue.number} — ${label} set`);
+              } catch (e) {
+                console.log(`[${repo}] Issue #${issue.number} — ${label} failed: ${e.message}`);
               }
-            `, { p: projectId, i: issue.node_id });
-
-            const itemId = addRes.addProjectV2ItemById?.item?.id;
-            if (!itemId) { console.log(`Issue #${issue.number} — could not add to project.`); return; }
-            const updates = [];
+            }
 
             if (startDateField) {
-              updates.push(github.graphql(`
-                mutation($p: ID!, $i: ID!, $f: ID!, $v: ProjectV2FieldValue!) {
-                  updateProjectV2ItemFieldValue(input: { projectId: $p, itemId: $i, fieldId: $f, value: $v }) {
-                    projectV2Item { id }
-                  }
-                }
-              `, { p: projectId, i: itemId, f: startDateField.id, v: { date: issue.created_at.split("T")[0] } }));
+              await updateField(startDateField.id, { date: issue.created_at.split("T")[0] }, "Start Date");
             }
 
             if (storyPointField) {
               let points = 0;
-
               const spLabel = issue.labels.find(l => /^sp:\d+$/i.test(l.name));
               if (spLabel) {
                 points = parseInt(spLabel.name.split(":")[1], 10);
               }
-
               if (!points && issue.body) {
                 const m = issue.body.match(/###\s*Story Points\s*[\r\n]+\s*(\d+)/);
                 if (m) {
@@ -82,18 +106,11 @@ jobs:
                       issue_number: issue.number,
                       labels: [`sp:${points}`]
                     });
-                  } catch(e) {}
+                  } catch (e) {}
                 }
               }
-
               if (points > 0) {
-                updates.push(github.graphql(`
-                  mutation($p: ID!, $i: ID!, $f: ID!, $v: ProjectV2FieldValue!) {
-                    updateProjectV2ItemFieldValue(input: { projectId: $p, itemId: $i, fieldId: $f, value: $v }) {
-                      projectV2Item { id }
-                    }
-                  }
-                `, { p: projectId, i: itemId, f: storyPointField.id, v: { number: points } }));
+                await updateField(storyPointField.id, { number: points }, `Story Points (${points})`);
               }
             }
 
@@ -103,16 +120,9 @@ jobs:
                 const priorityText = m[1].trim();
                 const option = priorityField.options.find(o => o.name.toLowerCase() === priorityText.toLowerCase());
                 if (option) {
-                  updates.push(github.graphql(`
-                    mutation($p: ID!, $i: ID!, $f: ID!, $v: ProjectV2FieldValue!) {
-                      updateProjectV2ItemFieldValue(input: { projectId: $p, itemId: $i, fieldId: $f, value: $v }) {
-                        projectV2Item { id }
-                      }
-                    }
-                  `, { p: projectId, i: itemId, f: priorityField.id, v: { singleSelectOptionId: option.id } }));
+                  await updateField(priorityField.id, { singleSelectOptionId: option.id }, `Priority (${option.name})`);
                 }
               }
             }
 
-            await Promise.all(updates);
-            console.log(`Issue #${issue.number} added — Start Date, Story Points, and Priority synced.`);
+            console.log(`[${repo}] Issue #${issue.number} — sync complete`);
