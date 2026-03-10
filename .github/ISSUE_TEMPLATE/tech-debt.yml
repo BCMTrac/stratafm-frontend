@@ -1,0 +1,54 @@
+name: "Tech Debt / Refactor"
+description: Code cleanup, refactoring, .NET migration, performance improvement
+title: "[Tech Debt]: "
+labels: ["tech-debt"]
+body:
+  - type: textarea
+    id: summary
+    attributes:
+      label: What is the problem?
+      description: Describe the current state and why it needs to change
+    validations:
+      required: true
+  - type: textarea
+    id: goal
+    attributes:
+      label: Goal / Desired State
+      description: What does done look like?
+    validations:
+      required: true
+  - type: textarea
+    id: risk
+    attributes:
+      label: Risk / Impact
+      description: What could break? What does this unblock?
+    validations:
+      required: false
+  - type: dropdown
+    id: category
+    attributes:
+      label: Category
+      options:
+        - .NET Migration (4 to 8)
+        - Performance
+        - Code Quality / Cleanup
+        - Security Hardening
+        - Dependency Update
+        - Architecture / Patterns
+    validations:
+      required: true
+  - type: dropdown
+    id: story_points
+    attributes:
+      label: Story Points
+      description: Fibonacci estimate — auto-syncs to project board
+      options: ["1", "2", "3", "5", "8", "13", "21"]
+    validations:
+      required: true
+  - type: dropdown
+    id: priority
+    attributes:
+      label: Priority
+      options: [Low, Medium, High, Critical]
+    validations:
+      required: true
