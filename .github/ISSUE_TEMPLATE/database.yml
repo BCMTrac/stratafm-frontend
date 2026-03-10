@@ -1,0 +1,57 @@
+name: "Database Change"
+description: Schema change, stored procedure, migration, or DBA work
+title: "[DB]: "
+labels: ["database"]
+body:
+  - type: textarea
+    id: summary
+    attributes:
+      label: What needs to change?
+      description: Describe the database work required
+    validations:
+      required: true
+  - type: textarea
+    id: affected
+    attributes:
+      label: Affected Tables / Objects
+      placeholder: "Tables: ...\nStored Procs: ...\nViews: ..."
+    validations:
+      required: true
+  - type: textarea
+    id: migration
+    attributes:
+      label: Migration Script / Notes
+      description: Script outline or migration approach
+    validations:
+      required: false
+  - type: textarea
+    id: rollback
+    attributes:
+      label: Rollback Plan
+    validations:
+      required: false
+  - type: dropdown
+    id: story_points
+    attributes:
+      label: Story Points
+      description: Fibonacci estimate — auto-syncs to project board
+      options: ["1", "2", "3", "5", "8", "13", "21"]
+    validations:
+      required: true
+  - type: dropdown
+    id: priority
+    attributes:
+      label: Priority
+      options: [Low, Medium, High, Critical]
+    validations:
+      required: true
+  - type: checkboxes
+    id: checklist
+    attributes:
+      label: Checklist
+      options:
+        - label: DBA review required
+        - label: Affects production data
+        - label: Needs data migration
+        - label: API / code changes needed (create linked issue)
+        - label: Backup taken before change
