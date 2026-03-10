@@ -94,11 +94,13 @@ jobs:
               const spLabel = issue.labels.find(l => /^sp:\d+$/i.test(l.name));
               if (spLabel) {
                 points = parseInt(spLabel.name.split(":")[1], 10);
+                console.log(`[${repo}] Issue #${issue.number} — Story Points found via label: ${points}`);
               }
               if (!points && issue.body) {
                 const m = issue.body.match(/###\s*Story Points\s*[\r\n]+\s*(\d+)/);
                 if (m) {
                   points = parseInt(m[1], 10);
+                  console.log(`[${repo}] Issue #${issue.number} — Story Points found via body regex: ${points}`);
                   try {
                     await github.rest.issues.addLabels({
                       owner: context.repo.owner,
@@ -107,11 +109,18 @@ jobs:
                       labels: [`sp:${points}`]
                     });
                   } catch (e) {}
+                } else {
+                  console.log(`[${repo}] Issue #${issue.number} — no Story Points found in labels or body`);
                 }
+              }
+              if (!points && !issue.body) {
+                console.log(`[${repo}] Issue #${issue.number} — no Story Points found (no labels, no body)`);
               }
               if (points > 0) {
                 await updateField(storyPointField.id, { number: points }, `Story Points (${points})`);
               }
+            } else {
+              console.log(`[${repo}] Issue #${issue.number} — Story Points field not found on project board`);
             }
 
             if (priorityField && priorityField.options && issue.body) {
