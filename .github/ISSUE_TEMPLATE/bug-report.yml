@@ -1,0 +1,74 @@
+name: Bug Report
+description: Something is broken or not working as expected
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Fill in the fields below. Story Points and Priority are used by the project board automation.
+
+  - type: textarea
+    id: description
+    attributes:
+      label: Description
+      description: What is broken? What did you expect to happen?
+      placeholder: Describe the bug clearly...
+    validations:
+      required: true
+
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to Reproduce
+      placeholder: |
+        1. Go to...
+        2. Click...
+        3. See error
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected Behaviour
+    validations:
+      required: false
+
+  - type: dropdown
+    id: priority
+    attributes:
+      label: Priority
+      options:
+        - Low
+        - Medium
+        - High
+        - Critical
+      default: 1
+    validations:
+      required: true
+
+  - type: dropdown
+    id: area
+    attributes:
+      label: Area
+      options:
+        - BCMTrac MVC
+        - StraTaTrac
+        - Auth / Gateway
+        - Statement API
+        - Invoice API
+        - Email API
+        - Other API
+        - Infrastructure
+        - Other
+    validations:
+      required: true
+
+  - type: input
+    id: story_points
+    attributes:
+      label: Story Points
+      description: Effort estimate (1 = trivial, 2 = small, 3 = medium, 5 = large, 8 = very large)
+      placeholder: "2"
+    validations:
+      required: true
