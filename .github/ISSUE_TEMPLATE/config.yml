@@ -1,0 +1,5 @@
+blank_issues_enabled: false
+contact_links:
+  - name: BCMTrac Project Board
+    url: https://github.com/orgs/BCMTrac/projects/8
+    about: View all issues on the project board
