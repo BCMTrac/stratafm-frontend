@@ -1,0 +1,57 @@
+name: "Server / Infrastructure"
+description: Server setup, IIS config, deployments, networking, environment work
+title: "[Infra]: "
+labels: ["infrastructure"]
+body:
+  - type: textarea
+    id: summary
+    attributes:
+      label: What needs to be done?
+      description: Describe the server or infrastructure task
+    validations:
+      required: true
+  - type: textarea
+    id: environment
+    attributes:
+      label: Target Environment
+      placeholder: "e.g. IIS-01 (121), SQL-01, NewDevSQL (133), MGT-01..."
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps / Plan
+      placeholder: "1. ...\n2. ...\n3. ..."
+    validations:
+      required: false
+  - type: textarea
+    id: rollback
+    attributes:
+      label: Rollback Plan
+      description: How do we undo this if something goes wrong?
+    validations:
+      required: false
+  - type: dropdown
+    id: story_points
+    attributes:
+      label: Story Points
+      description: Fibonacci estimate — auto-syncs to project board
+      options: ["1", "2", "3", "5", "8", "13", "21"]
+    validations:
+      required: true
+  - type: dropdown
+    id: priority
+    attributes:
+      label: Priority
+      options: [Low, Medium, High, Critical]
+    validations:
+      required: true
+  - type: checkboxes
+    id: checklist
+    attributes:
+      label: Checklist
+      options:
+        - label: SA sign-off required
+        - label: Requires scheduled downtime window
+        - label: Affects production services
+        - label: Firewall / network rule changes needed
